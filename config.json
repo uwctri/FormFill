@@ -1,0 +1,115 @@
+{
+    "name": "Form Fill",
+    "description": "Fillout a PDF form and email, save, or fax it",
+    "namespace": "UWMadison\\FormFill",
+    "authors": [
+        {
+            "name": "Adam Nunez",
+            "email": "Adam.Nunez@ctri.wisc.edu",
+            "institution": "UW Madison - Center for Tobacco Research and Intervention "
+        }
+    ],
+    "permissions": [
+        "redcap_data_entry_form",
+        "redcap_every_page_top"
+    ],
+    "framework-version": 5,
+    "system-settings": [
+        {
+            "key": "fax-fufiller",
+            "name": "<b>Faxing address:</b><br>i.e. 'concordsend.com'",
+            "type": "textbox"
+        }
+    ],
+    "project-settings": [
+        {
+            "key": "descriptive",
+            "name": "When filling in checkboxes on a PDF eveny item should be individualy named, any truthy value will be used to select the checkbox. All dates are formatted m/d/y. Time and datetime fields are not currently supported. PDF Radio, buttons, and dropdowns, and option lists are not currently supported.",
+            "type": "descriptive"
+        },
+        {
+            "key": "filable-instance",
+            "name": "<b>Form</b>",
+            "type": "sub_settings",
+            "repeatable":true,
+            "sub_settings":[
+                {
+                    "key": "instrument",
+                    "name": "<b>Active Instruments</b>",
+                    "type": "form-list",
+                    "repeatable": true
+                },
+                {
+                    "key": "event",
+                    "name": "<b>Default Data Pull Event:</b><br>Data is pulled from the local event, then the default, then the first until a non-blank is found",
+                    "type": "event-list"
+                },
+                {
+                    "key": "pdf",
+                    "name": "<b>Source File Location:</b><br>Location on the server of the fillable PDF",
+                    "type": "textbox"
+                },
+                {
+                    "key": "button",
+                    "name": "<b>Generate Button Selector:</b><br>CSS Selector",
+                    "type": "textbox"
+                },
+                {
+                    "key": "destination",
+                    "name": "<b>Destination</b>",
+                    "type": "radio",
+                    "choices": [
+                        {
+                            "value": "download",
+                            "name" : "Download"
+                        },
+                        {
+                            "value": "email",
+                            "name" : "Email"
+                        },
+                        {
+                            "value": "fax",
+                            "name" : "Fax"
+                        }
+                    ]
+                },
+                {
+                    "key": "subject",
+                    "name": "<b>Subject</b>",
+                    "type": "textbox"
+                },
+                {
+                    "key": "phone",
+                    "name": "<b>Phone Number:</b><br>Include country code, formatting not important",
+                    "type": "textbox"
+                },
+                {
+                    "key": "email",
+                    "name": "<b>Email</b>",
+                    "type": "textbox"
+                },
+                {
+                    "key": "filable-field",
+                    "name": "<b>Field</b>",
+                    "type": "sub_settings",
+                    "repeatable":true,
+                    "sub_settings":[
+                        {
+                            "key": "pdf-field-name",
+                            "name": "<b>PDF Field</b>",
+                            "type": "textbox"
+                        },
+                        {
+                            "key": "fill-value",
+                            "name": "<b>Value</b>",
+                            "type": "field-list"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "compatibility": {
+        "redcap-version-min": "10.0.0"
+    }
+}
