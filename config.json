@@ -74,9 +74,19 @@
                     ]
                 },
                 {
+                    "key": "email",
+                    "name": "<b>Email</b>",
+                    "type": "textbox"
+                },
+                {
                     "key": "subject",
                     "name": "<b>Subject</b>",
                     "type": "textbox"
+                },
+                {
+                    "key": "body",
+                    "name": "<b>Email body</b>",
+                    "type": "textarea"
                 },
                 {
                     "key": "phone",
@@ -84,9 +94,14 @@
                     "type": "textbox"
                 },
                 {
-                    "key": "email",
-                    "name": "<b>Email</b>",
+                    "key": "regarding",
+                    "name": "<b>Regarding</b>",
                     "type": "textbox"
+                },
+                {
+                    "key": "cover",
+                    "name": "<b>Cover Letter Text</b>",
+                    "type": "textarea"
                 },
                 {
                     "key": "filable-field",

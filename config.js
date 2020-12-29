@@ -27,9 +27,12 @@ $(document).ready(function() {
                 let selection = $(this).find('input:checked').val();
                 if ( selection == 'email' ) {
                     $set.eq(0).show();
+                    $set.eq(1).show();
                     $set.eq(2).show();
                 } else if ( selection == 'fax' ) {
-                    $set.eq(1).show();
+                    $set.eq(3).show();
+                    $set.eq(4).show();
+                    $set.eq(5).show();
                 }
             });
             $modal.find("tr[field=destination] input:checked").click();

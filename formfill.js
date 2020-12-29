@@ -49,13 +49,13 @@ FormFill.functions.fillPDF = async function() {
     switch ( FormFill.settings.destination ) {
         case 'email':
             pdf = await FormFill.pdfDoc.saveAsBase64();
-            FormFill.functions.send(FormFill.from, FormFill.settings.email, FormFill.settings.subject || "", pdf);
+            FormFill.functions.send(FormFill.from, FormFill.settings.email, FormFill.settings.subject || "", pdf, FormFill.settings.body);
             break;
         case 'fax':
             pdf = await FormFill.pdfDoc.saveAsBase64();
             let phone = FormFill.settings.phone.replace(/[-() ]/g,'');
             phone = phone.length != 11 ? '1' + phone : phone;
-            FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.subject || "", pdf);
+            FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
             break;
         case 'download':
             let pdfBytes = await FormFill.pdfDoc.save();
@@ -64,7 +64,7 @@ FormFill.functions.fillPDF = async function() {
     }
 }
 
-FormFill.functions.send = function(from, to, subject, pdf) {
+FormFill.functions.send = function(from, to, subject, pdf, body) {
     $.ajax({
         method: 'POST',
         url: FormFill.POST,
@@ -72,27 +72,37 @@ FormFill.functions.send = function(from, to, subject, pdf) {
             from: from,
             to: to,
             attachment: pdf,
-            subject: subject
+            subject: subject,
+            message: body
         },
-        error: async function(jqXHR, textStatus, errorThrown){ 
+        error: function(jqXHR, textStatus, errorThrown){ 
             console.log(textStatus);
-            let uri = await FormFill.pdfDoc.saveAsBase64({ dataUri: true });
-            Swal.fire({
-                icon: 'error',
-                title: 'Issue Sending Fax/Email',
-                text: 'REDCap was unable to send the form as requested. You may download the completed form below and send it manually.',
-                footer: `<a href=${uri} style="font-size:large" download="REDCap_Form.pdf"><b>Download</b></a>`,
-                allowOutsideClick: false
-            });
+            FormFill.functions.failsafeDownload();
         },
         success: function(data){ 
-            console.log(data); 
-            Swal.fire({
-                icon: 'success',
-                title: 'Document Sent',
-                text: 'The completed document has been successfully ' + FormFill.settings.destination + 'ed!',
-            });
+            data = JSON.parse(data);
+            console.log(data.text);
+            if ( data.sent) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Document Sent',
+                    text: 'The completed document has been successfully ' + FormFill.settings.destination + 'ed!',
+                });
+            } else {
+                FormFill.functions.failsafeDownload();
+            }
         }
+    });
+}
+
+FormFill.functions.failsafeDownload = async function() {
+    let uri = await FormFill.pdfDoc.saveAsBase64({ dataUri: true });
+    Swal.fire({
+        icon: 'error',
+        title: 'Issue Sending Fax/Email',
+        text: 'REDCap was unable to send the form as requested. You may download the completed form below and send it manually.',
+        footer: `<a href=${uri} style="font-size:large" download="REDCap_Form.pdf"><b>Download</b></a>`,
+        allowOutsideClick: false
     });
 }
 

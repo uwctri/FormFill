@@ -19,8 +19,7 @@ fclose($file);
 $sent = REDCap::email($_POST['to'], $_POST['from'], $_POST['subject'], $_POST['message'], null, null, null, ['REDCap_Form.pdf'=>$path]);
 unlink($path);
 
-if ($sent) {
-    echo "Email/Fax Sent";
-} else {
-    echo "Issue sending Email/Fax";
-}
+echo json_encode([
+    'text' => $sent ? "Email/Fax Sent" : "Issue sending Email/Fax",
+    'sent' => $sent
+]);
