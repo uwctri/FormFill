@@ -3,20 +3,15 @@
 namespace UWMadison\FormFill;
 use ExternalModules\AbstractExternalModule;
 use ExternalModules\ExternalModules;
-
 use REDCap;
-
-function printToScreen($string) {
-    ?><script>console.log(<?=json_encode($string); ?>);</script><?php
-}
 
 class FormFill extends AbstractExternalModule {
     
     private $module_prefix = 'form_fill';
     private $module_global = 'FormFill';
-    private $module_name = 'FormFill';
     
     private $PDFlibJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.13.0/pdf-lib.min.js';
+    private $sha = 'sha512-NgGjd0/V0QfzSn73hJQ5v7pZI7uzDWB+mU2OvlCJhCP3HDGn3vXOHt4yYv/jA4HSjQfjf7CfmeysLNftJYEWIg==';
     
     public function __construct() {
         parent::__construct();
@@ -33,6 +28,8 @@ class FormFill extends AbstractExternalModule {
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) {
         $allInstruments = $this->getProjectSetting('instrument');
         $settingIndex = -1;
+        
+        // Note: We only support one form fill per page here
         foreach ( $allInstruments as $index => $instrumentList ) {
             if ( in_array($instrument,  $instrumentList) )
                 $settingIndex = $index;
@@ -45,15 +42,18 @@ class FormFill extends AbstractExternalModule {
         $settings = $this->getProjectSettings();
         $parsed = [];
         $dd = REDCap::getDataDictionary('array');
+        
         foreach ( $settings as $name => $valueArray ) {
             if ( in_array($name, ['enabled','filable-instance','instrument','filable-field','event']) )
                 continue;
+                
             if ( $name == 'pdf' ) {
                 $file = $valueArray[$settingIndex];
                 if ( !empty($file) )
                     $file = unpack("C*", file_get_contents($file));
                 continue;
             }
+            
             if ( $name == 'fill-value' ) {
                 $fetched = [];
                 $defaultEvent = $this->getProjectSetting('event')[$settingIndex];
@@ -72,6 +72,7 @@ class FormFill extends AbstractExternalModule {
                 $parsed['redcap-fields'] = $valueArray[$settingIndex];
                 continue;
             }
+            
             $parsed[$name] = $valueArray[$settingIndex];
         }
          
@@ -104,7 +105,7 @@ class FormFill extends AbstractExternalModule {
     }
     
     private function includePDFlibJS() {
-        echo '<script src="'. $this->PDFlibJS .'" integrity="sha512-NgGjd0/V0QfzSn73hJQ5v7pZI7uzDWB+mU2OvlCJhCP3HDGn3vXOHt4yYv/jA4HSjQfjf7CfmeysLNftJYEWIg==" crossorigin="anonymous"></script>';
+        echo '<script src="'. $this->PDFlibJS .'" integrity="'. $this->sha .'" crossorigin="anonymous"></script>';
     }
 }
 

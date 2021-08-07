@@ -1,5 +1,4 @@
 <?php
-$module = new \UWMadison\FormFill\FormFill();
 use REDCap;
 
 if ($_SERVER['REQUEST_METHOD'] != 'POST' || !isset($_POST['from']) || !isset($_POST['to']) || !isset($_POST['attachment'])) {

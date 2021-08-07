@@ -47,6 +47,6 @@ $(document).ready(function() {
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld !== 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstances = ExternalModules.Settings.prototype.resetConfigInstancesOld;
 
-        $modal.removeClass('CTRIportalConfig');
+        $modal.removeClass('FormFillConfig');
     });
 });

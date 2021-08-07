@@ -132,7 +132,6 @@ FormFill.functions.issue = function() {
 }
 
 $(document).ready( async function () {
-    console.log("Loading FormFill Plugin");
     FormFill.pdfDoc = await PDFLib.PDFDocument.load( Uint8Array.from(Object.values(FormFill.pdf_base64)) );
     
     if (typeof Shazam == "object") { 
