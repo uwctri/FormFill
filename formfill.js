@@ -1,11 +1,17 @@
 FormFill.functions = {};
+FormFill.initSuccess = false;
 
 FormFill.functions.attachEvents = function() {
+    if (FormFill.initSuccess)
+        return;
     if ( (FormFill.settings.destination == 'email' && !FormFill.settings.email) || 
          (FormFill.settings.destination == 'fax' &&  (!FormFill.settings.phone || !FormFill.fax ) ) )
         $(FormFill.settings.button).on('click', FormFill.functions.issue);
-    else
+    }
+    else {
         $(FormFill.settings.button).on('click', FormFill.functions.fillPDF);
+    }
+    FormFill.initSuccess = true;
 }
 
 FormFill.functions.fillPDF = async function() {
@@ -45,14 +51,13 @@ FormFill.functions.fillPDF = async function() {
     });
     
     // Save and send
-    let pdf;
     switch ( FormFill.settings.destination ) {
         case 'email':
-            pdf = await FormFill.pdfDoc.saveAsBase64();
+            let pdf = await FormFill.pdfDoc.saveAsBase64();
             FormFill.functions.send(FormFill.from, FormFill.settings.email, FormFill.settings.subject || "", pdf, FormFill.settings.body);
             break;
         case 'fax':
-            pdf = await FormFill.pdfDoc.saveAsBase64();
+            let pdf = await FormFill.pdfDoc.saveAsBase64();
             let phone = FormFill.settings.phone.replace(/[-() ]/g,'');
             phone = phone.length != 11 ? '1' + phone : phone;
             FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
@@ -111,16 +116,17 @@ FormFill.functions.failsafeDownload = async function() {
 }
 
 FormFill.functions.download = function(data, name, type) {
+    // Create a junk object to enable the download
     if (data !== null && navigator.msSaveBlob)
         return navigator.msSaveBlob(new Blob([data], { type: type }), name);
-    var a = $("<a style='display: none;'/>");
+    var tmp = $("<a style='display: none;'/>");
     var url = window.URL.createObjectURL(new Blob([data], {type: type}));
-    a.attr("href", url);
-    a.attr("download", name);
-    $("body").append(a);
-    a[0].click();
+    tmp.attr("href", url);
+    tmp.attr("download", name);
+    $("body").append(tmp);
+    tmp[0].click();
     window.URL.revokeObjectURL(url);
-    a.remove();
+    tmp.remove();
 }
 
 FormFill.functions.issue = function() {
@@ -133,7 +139,7 @@ FormFill.functions.issue = function() {
 
 $(document).ready( async function () {
     FormFill.pdfDoc = await PDFLib.PDFDocument.load( Uint8Array.from(Object.values(FormFill.pdf_base64)) );
-    
+    // Load the config, play nice w/ Shazam
     if (typeof Shazam == "object") { 
         let oldCallback = Shazam.beforeDisplayCallback;
         Shazam.beforeDisplayCallback = function () {
