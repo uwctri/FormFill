@@ -84,13 +84,51 @@ class FormFill extends AbstractExternalModule {
         }
     }
     
+    public function sendEmail() {
+        if ($_SERVER['REQUEST_METHOD'] != 'POST' || !isset($_POST['from']) || !isset($_POST['to']) || !isset($_POST['attachment'])) {
+            echo "Missing required parameters";
+            return;
+        }
+
+        // Set blank values if missing
+        if (!isset($_POST['subject'])) $_POST['subject'] = '';
+        if (!isset($_POST['message'])) $_POST['message'] = ' '; // Redcap requires a non-empty-string message
+
+        // Stash the PDF in the PHP tmp directory, send the email, and remove the file
+        $pdf = base64_decode($_POST['attachment']);
+        $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tmpRedcap.pdf';
+        $file = fopen($path,'w');
+        fwrite($file,$pdf);
+        fclose($file);
+        $sent = REDCap::email($_POST['to'], $_POST['from'], $_POST['subject'], $_POST['message'], null, null, null, ['REDCap_Form.pdf'=>$path]);
+        unlink($path);
+
+        echo json_encode([
+            'text' => $sent ? "Email/Fax Sent" : "Issue sending Email/Fax",
+            'sent' => $sent
+        ]);
+    }
+    
+    public function projectLog( $action, $changes, $record, $eventid, $pid ) {
+        // We expect all of these, just being safe.
+        $sql = NULL;
+        $action =  empty($action)  ? "No action logged" : $action;
+        $changes = empty($changes) ? NULL : $changes;
+        $record =  empty($record)  ? NULL : $record;
+        $eventid = empty($eventid) ? NULL : $eventid;
+        
+        REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
+        echo "Action Logged";
+    }
+    
     private function initGlobal() {
         global $project_contact_email;
         global $from_email;
         $data = array(
             "modulePrefix" => $this->module_prefix,
             "from" => $from_email ? $from_email : $project_contact_email,
-            "POST" => $this->getUrl('sendEmail.php'),
+            "sendAjax" => $this->getUrl('sendEmail.php'),
+            "logAjax" => $this->getUrl('log.php'),
             "fax" => $this->getSystemSetting('fax-fufiller')
         );
         echo "<script>var ".$this->module_global." = ".json_encode($data).";</script>";

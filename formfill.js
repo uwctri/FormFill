@@ -1,6 +1,32 @@
 FormFill.functions = {};
 FormFill.initSuccess = false;
 
+FormFill.functions.log = function(action, details) {
+    action = action || "";
+    details = details || "";
+    let record = getParameterByName('id');
+    let eventid = getParameterByName('event_id');
+    
+    if ( !record || !eventid ) 
+        return;
+    
+    $.ajax({
+        method: 'POST',
+        url: FormFill.logAjax,
+        data: {
+            action: action,
+            changes: details,
+            record: record,
+            eventid: eventid,
+            pid: pid
+        },
+        error: (jqXHR, textStatus, errorThrown) => console.log(textStatus + " " + errorThrown),
+        success: (data) => {
+            console.log(data);
+        }
+    });
+}
+
 FormFill.functions.attachEvents = function() {
     if (FormFill.initSuccess)
         return;
@@ -72,7 +98,7 @@ FormFill.functions.fillPDF = async function() {
 FormFill.functions.send = function(from, to, subject, pdf, body) {
     $.ajax({
         method: 'POST',
-        url: FormFill.POST,
+        url: FormFill.sendAjax,
         data: {
             from: from,
             to: to,
@@ -94,11 +120,11 @@ FormFill.functions.send = function(from, to, subject, pdf, body) {
                     text: 'The completed document has been successfully ' + FormFill.settings.destination + 'ed!',
                 });
                 if (typeof ez !== "undefined") 
-                    ez.log( 'Form sent', 'To: ' + to + '\nSubject: ' + subject );
+                    FormFill.functions.log( 'Form sent', 'To: ' + to + '\nSubject: ' + subject );
             } else {
                 FormFill.functions.failsafeDownload();
                 if (typeof ez !== "undefined") 
-                    ez.log( 'Form send failed', 'To: ' + to + '\nSubject: ' + subject );
+                    FormFill.functions.log( 'Form send failed', 'To: ' + to + '\nSubject: ' + subject );
             }
         }
     });
