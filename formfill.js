@@ -31,7 +31,7 @@ FormFill.functions.attachEvents = function() {
     if (FormFill.initSuccess)
         return;
     if ( (FormFill.settings.destination == 'email' && !FormFill.settings.email) || 
-         (FormFill.settings.destination == 'fax' &&  (!FormFill.settings.phone || !FormFill.fax ) ) )
+         (FormFill.settings.destination == 'fax' &&  (!FormFill.settings.phone || !FormFill.fax ) ) ) {
         $(FormFill.settings.button).on('click', FormFill.functions.issue);
     }
     else {
@@ -77,13 +77,14 @@ FormFill.functions.fillPDF = async function() {
     });
     
     // Save and send
+    let pdf = null;
     switch ( FormFill.settings.destination ) {
         case 'email':
-            let pdf = await FormFill.pdfDoc.saveAsBase64();
+            pdf = await FormFill.pdfDoc.saveAsBase64();
             FormFill.functions.send(FormFill.from, FormFill.settings.email, FormFill.settings.subject || "", pdf, FormFill.settings.body);
             break;
         case 'fax':
-            let pdf = await FormFill.pdfDoc.saveAsBase64();
+            pdf = await FormFill.pdfDoc.saveAsBase64();
             let phone = FormFill.settings.phone.replace(/[-() ]/g,'');
             phone = phone.length != 11 ? '1' + phone : phone;
             FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
