@@ -14,8 +14,10 @@ Core configuration consists of selecting an active instrument, source file (a PD
 
 ## Call Outs
 
-* PDF Radio, Buttons, and dropdowns are not supported at this time.
+* PDF Radio and dropdowns are not supported at this time.
 
 * All dates are formatted m/d/y 
 
-* PDF Checkboxes are supported, their data should be soruced from an text, note, or calc field. Each checkbox on the PDF should be indivudually named and data loaded for each.
+* We only support one instance of form fill per instrument
+
+* PDF Checkboxes are supported, their data should be sourced from an text, note, or calc field. Each checkbox on the PDF should be indivudually named and data loaded for each.
