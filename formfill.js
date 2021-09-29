@@ -12,8 +12,9 @@ FormFill.functions.log = function(action, details) {
     
     $.ajax({
         method: 'POST',
-        url: FormFill.logAjax,
+        url: FormFill.router,
         data: {
+            route: 'log',
             action: action,
             changes: details,
             record: record,
@@ -99,8 +100,9 @@ FormFill.functions.fillPDF = async function() {
 FormFill.functions.send = function(from, to, subject, pdf, body) {
     $.ajax({
         method: 'POST',
-        url: FormFill.sendAjax,
+        url: FormFill.router,
         data: {
+            route: 'email',
             from: from,
             to: to,
             attachment: pdf,

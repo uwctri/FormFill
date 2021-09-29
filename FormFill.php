@@ -9,13 +9,8 @@ class FormFill extends AbstractExternalModule {
     
     private $module_prefix = 'form_fill';
     private $module_global = 'FormFill';
-    
-    private $PDFlibJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.13.0/pdf-lib.min.js';
-    private $sha = 'sha512-NgGjd0/V0QfzSn73hJQ5v7pZI7uzDWB+mU2OvlCJhCP3HDGn3vXOHt4yYv/jA4HSjQfjf7CfmeysLNftJYEWIg==';
-    
-    public function __construct() {
-        parent::__construct();
-    }
+    private $PDFlibJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js";
+    private $sha = "sha512-fY7ysH3L9y/DP/DVYqPNopiQ+Ubd9t0dt9C4riu0RZwYOvMejMnKVAnXK7xfB0SIawKP0c4sQoh2niIMSkkWAw==";
     
     public function redcap_every_page_top($project_id) {
         // Custom Config page
@@ -26,11 +21,11 @@ class FormFill extends AbstractExternalModule {
     }
     
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance) {
-        $allInstruments = $this->getProjectSetting('instrument');
+        $settings = $this->getProjectSettings();
         $settingIndex = -1;
         
         // Note: We only support one form fill per page here
-        foreach ( $allInstruments as $index => $instrumentList ) {
+        foreach ( $settings['instrument'] as $index => $instrumentList ) {
             if ( in_array($instrument,  $instrumentList) )
                 $settingIndex = $index;
         }
@@ -39,7 +34,6 @@ class FormFill extends AbstractExternalModule {
             return;
         
         $this->initGlobal();
-        $settings = $this->getProjectSettings();
         $parsed = [];
         $dd = REDCap::getDataDictionary('array');
         
@@ -56,7 +50,7 @@ class FormFill extends AbstractExternalModule {
             
             if ( $name == 'fill-value' ) {
                 $fetched = [];
-                $defaultEvent = $this->getProjectSetting('event')[$settingIndex];
+                $defaultEvent = $settings['event'][$settingIndex];
                 foreach ( $valueArray[$settingIndex] as $index => $field ) {
                     $data = REDCap::getData( $project_id, 'array', $record, $field)[$record];
                     $data = empty($data[$event_id][$field]) ? empty($data[$defaultEvent][$field]) ? reset($data)[$field] : $data[$defaultEvent][$field] : $data[$event_id][$field];
@@ -77,6 +71,7 @@ class FormFill extends AbstractExternalModule {
         }
          
         if ( !empty($file) ) {
+            $this->passArgument('debug',$settings);
             $this->passArgument('pdf_base64',$file);
             $this->passArgument('settings',$parsed);
             $this->includePDFlibJS();
@@ -86,7 +81,10 @@ class FormFill extends AbstractExternalModule {
     
     public function sendEmail() {
         if ($_SERVER['REQUEST_METHOD'] != 'POST' || !isset($_POST['from']) || !isset($_POST['to']) || !isset($_POST['attachment'])) {
-            echo "Missing required parameters";
+            echo json_encode([
+                'text' => "Missing required parameters",
+                'sent' => false
+            ]);
             return;
         }
 
@@ -109,41 +107,43 @@ class FormFill extends AbstractExternalModule {
         ]);
     }
     
-    public function projectLog( $action, $changes, $record, $eventid, $pid ) {
-        // We expect all of these, just being safe.
+    public function projectLog() {
+        // We expect all of these to be set, just being safe.
         $sql = NULL;
-        $action =  empty($action)  ? "No action logged" : $action;
-        $changes = empty($changes) ? NULL : $changes;
-        $record =  empty($record)  ? NULL : $record;
-        $eventid = empty($eventid) ? NULL : $eventid;
+        $pid = $_POST['pid'];
+        $action =  empty($_POST['action'])  ? "No action logged" : $action;
+        $changes = empty($_POST['changes']) ? NULL : $changes;
+        $record =  empty($_POST['record'])  ? NULL : $record;
+        $eventid = empty($_POST['eventid']) ? NULL : $eventid;
         
         REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
-        echo "Action Logged";
+        echo json_encode([
+            'text' => 'Action logged'
+        ]);
     }
     
     private function initGlobal() {
         global $project_contact_email;
         global $from_email;
-        $data = array(
+        $data = json_encode(array(
             "modulePrefix" => $this->module_prefix,
             "from" => $from_email ? $from_email : $project_contact_email,
-            "sendAjax" => $this->getUrl('sendEmail.php'),
-            "logAjax" => $this->getUrl('log.php'),
+            "router" => $this->getUrl('router.php'),
             "fax" => $this->getSystemSetting('fax-fufiller')
-        );
-        echo "<script>var ".$this->module_global." = ".json_encode($data).";</script>";
+        ));
+        echo "<script>var {$this->module_global} = {$data};</script>";
     }
     
     private function passArgument($name, $value) {
-        echo "<script>".$this->module_global.".".$name." = ".json_encode($value).";</script>";
+        echo "<script>{$this->module_global}.{$name} = ".json_encode($value).";</script>";
     }
     
     private function includeJs($path) {
-        echo '<script src="' . $this->getUrl($path) . '"></script>';
+        echo "<script src={$this->getUrl($path)}></script>";
     }
     
     private function includePDFlibJS() {
-        echo '<script src="'. $this->PDFlibJS .'" integrity="'. $this->sha .'" crossorigin="anonymous"></script>';
+        echo "<script src={$this->PDFlibJS} integrity={$this->sha} crossorigin='anonymous'></script>";
     }
 }
 
