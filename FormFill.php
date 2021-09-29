@@ -125,12 +125,12 @@ class FormFill extends AbstractExternalModule {
     private function initGlobal() {
         global $project_contact_email;
         global $from_email;
-        $data = json_encode(array(
+        $data = json_encode([
             "modulePrefix" => $this->module_prefix,
             "from" => $from_email ? $from_email : $project_contact_email,
             "router" => $this->getUrl('router.php'),
             "fax" => $this->getSystemSetting('fax-fufiller')
-        ));
+        ]);
         echo "<script>var {$this->module_global} = {$data};</script>";
     }
     
