@@ -7,7 +7,6 @@ use REDCap;
 
 class FormFill extends AbstractExternalModule {
     
-    private $module_prefix = 'form_fill';
     private $module_global = 'FormFill';
     private $PDFlibJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js";
     private $sha = "sha512-fY7ysH3L9y/DP/DVYqPNopiQ+Ubd9t0dt9C4riu0RZwYOvMejMnKVAnXK7xfB0SIawKP0c4sQoh2niIMSkkWAw==";
@@ -126,7 +125,7 @@ class FormFill extends AbstractExternalModule {
         global $project_contact_email;
         global $from_email;
         $data = json_encode([
-            "modulePrefix" => $this->module_prefix,
+            "modulePrefix" => $this->PREFIX,
             "from" => $from_email ? $from_email : $project_contact_email,
             "router" => $this->getUrl('router.php'),
             "fax" => $this->getSystemSetting('fax-fufiller')
