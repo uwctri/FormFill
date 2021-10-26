@@ -109,13 +109,9 @@ class FormFill extends AbstractExternalModule {
     public function projectLog() {
         // We expect all of these to be set, just being safe.
         $sql = NULL;
-        $pid = $_POST['pid'];
-        $action =  empty($_POST['action'])  ? "No action logged" : $action;
-        $changes = empty($_POST['changes']) ? NULL : $changes;
-        $record =  empty($_POST['record'])  ? NULL : $record;
-        $eventid = empty($_POST['eventid']) ? NULL : $eventid;
+        $action =  empty($_POST['action'])  ? "No action logged" : $_POST['action'];
         
-        REDCap::logEvent( $action , $changes, $sql, $record, $event, $pid);
+        REDCap::logEvent( $action , $_POST['changes'], $sql, $_POST['record'], $_GET['eventid'], $_GET['pid']);
         echo json_encode([
             'text' => 'Action logged'
         ]);

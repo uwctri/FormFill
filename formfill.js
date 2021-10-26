@@ -18,8 +18,7 @@ FormFill.functions.log = function(action, details) {
             action: action,
             changes: details,
             record: record,
-            eventid: eventid,
-            pid: pid
+            eventid: eventid
         },
         error: (jqXHR, textStatus, errorThrown) => console.log(textStatus + " " + errorThrown),
         success: (data) => {
