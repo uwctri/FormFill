@@ -72,8 +72,10 @@ FormFill.functions.fillPDF = async function() {
             else if ( !localVals[index])
                 pdfField.uncheck();
         }
-        else
-            pdfField.setText( localVals[index] );
+        else {
+            let tmp = typeof localVals[index] === "undefined" ? "[Field Does Not Exist]" : localVals[index];
+            pdfField.setText( tmp );
+        }
     });
     
     // Save and send
