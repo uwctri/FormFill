@@ -6,14 +6,14 @@
         {
             "name": "Adam Nunez",
             "email": "Adam.Nunez@ctri.wisc.edu",
-            "institution": "UW Madison - Center for Tobacco Research and Intervention "
+            "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
     "permissions": [
         "redcap_data_entry_form",
         "redcap_every_page_top"
     ],
-    "framework-version": 5,
+    "framework-version": 9,
     "system-settings": [
         {
             "key": "fax-fufiller",
@@ -31,8 +31,8 @@
             "key": "filable-instance",
             "name": "<b>Form</b>",
             "type": "sub_settings",
-            "repeatable":true,
-            "sub_settings":[
+            "repeatable": true,
+            "sub_settings": [
                 {
                     "key": "instrument",
                     "name": "<b>Active Instruments</b>",
@@ -61,15 +61,15 @@
                     "choices": [
                         {
                             "value": "download",
-                            "name" : "Download"
+                            "name": "Download"
                         },
                         {
                             "value": "email",
-                            "name" : "Email"
+                            "name": "Email"
                         },
                         {
                             "value": "fax",
-                            "name" : "Fax"
+                            "name": "Fax"
                         }
                     ]
                 },
@@ -107,8 +107,8 @@
                     "key": "filable-field",
                     "name": "<b>Field</b>",
                     "type": "sub_settings",
-                    "repeatable":true,
-                    "sub_settings":[
+                    "repeatable": true,
+                    "sub_settings": [
                         {
                             "key": "pdf-field-name",
                             "name": "<b>PDF Field</b>",
@@ -125,6 +125,6 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "10.0.0"
+        "redcap-version-min": "12.0.4"
     }
 }
