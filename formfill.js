@@ -123,12 +123,10 @@ FormFill.functions.send = function (from, to, subject, pdf, body) {
                     title: 'Document Sent',
                     text: 'The completed document has been successfully ' + FormFill.settings.destination + 'ed!',
                 });
-                if (typeof ez !== "undefined")
-                    FormFill.functions.log('Form sent', 'To: ' + to + '\nSubject: ' + subject);
+                FormFill.functions.log('Form sent', 'To: ' + to + '\nSubject: ' + subject);
             } else {
                 FormFill.functions.failsafeDownload();
-                if (typeof ez !== "undefined")
-                    FormFill.functions.log('Form send failed', 'To: ' + to + '\nSubject: ' + subject);
+                FormFill.functions.log('Form send failed', 'To: ' + to + '\nSubject: ' + subject);
             }
         }
     });
