@@ -113,6 +113,7 @@ FormFill.functions.send = function (from, to, subject, pdf, body) {
         error: function (jqXHR, textStatus, errorThrown) {
             console.log(textStatus);
             FormFill.functions.failsafeDownload();
+            FormFill.functions.log('Form send failed', 'To: ' + to + '\nSubject: ' + subject);
         },
         success: function (data) {
             data = JSON.parse(data);
@@ -155,6 +156,7 @@ FormFill.functions.download = function (data, name, type) {
     tmp[0].click();
     window.URL.revokeObjectURL(url);
     tmp.remove();
+    FormFill.functions.log('Form Downloaded', 'File: ' + name);
 }
 
 FormFill.functions.issue = function () {
