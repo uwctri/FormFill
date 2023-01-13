@@ -3,7 +3,6 @@
 namespace UWMadison\FormFill;
 
 use ExternalModules\AbstractExternalModule;
-use ExternalModules\ExternalModules;
 use REDCap;
 
 class FormFill extends AbstractExternalModule
@@ -22,7 +21,7 @@ class FormFill extends AbstractExternalModule
         }
     }
 
-    public function redcap_data_entry_form($project_id, $record, $instrument, $event_id, $group_id, $repeat_instance)
+    public function redcap_data_entry_form($project_id, $record, $instrument, $event_id)
     {
         $settings = $this->getProjectSettings();
         $settingIndex = -1;
