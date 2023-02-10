@@ -87,9 +87,11 @@ FormFill.functions.fillPDF = async function () {
             break;
         case 'fax':
             pdf = await FormFill.pdfDoc.saveAsBase64();
-            let phone = FormFill.settings.phone.replace(/[-() ]/g, '');
-            phone = phone.length != 11 ? '1' + phone : phone;
-            FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
+            let phones = FormFill.settings.phone.replace(/[-() ]/g, '').split(',');
+            phones.forEach((phone) => {
+                phone = phone.length != 11 ? '1' + phone : phone;
+                FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
+            });
             break;
         case 'download':
             let pdfBytes = await FormFill.pdfDoc.save();
