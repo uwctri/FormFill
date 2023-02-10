@@ -83,14 +83,17 @@ FormFill.functions.fillPDF = async function () {
     switch (FormFill.settings.destination) {
         case 'email':
             pdf = await FormFill.pdfDoc.saveAsBase64();
-            FormFill.functions.send(FormFill.from, FormFill.settings.email, FormFill.settings.subject || "", pdf, FormFill.settings.body);
+            let emails = FormFill.settings.email.replaceAll(' ', '').split(',');
+            emails.forEach(async (email) => {
+                await FormFill.functions.send(FormFill.from, email, FormFill.settings.subject || "", pdf, FormFill.settings.body);
+            });
             break;
         case 'fax':
             pdf = await FormFill.pdfDoc.saveAsBase64();
             let phones = FormFill.settings.phone.replace(/[-() ]/g, '').split(',');
-            phones.forEach((phone) => {
+            phones.forEach(async (phone) => {
                 phone = phone.length != 11 ? '1' + phone : phone;
-                FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
+                await FormFill.functions.send(FormFill.from, phone + "@" + FormFill.fax, FormFill.settings.regarding || "", pdf, FormFill.settings.cover);
             });
             break;
         case 'download':
@@ -100,7 +103,7 @@ FormFill.functions.fillPDF = async function () {
     }
 }
 
-FormFill.functions.send = function (from, to, subject, pdf, body) {
+FormFill.functions.send = async function (from, to, subject, pdf, body) {
     $.ajax({
         method: 'POST',
         url: FormFill.router,
