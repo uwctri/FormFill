@@ -10,14 +10,10 @@ This EM isn't yet available to install via redcap's EM database so you'll need t
 
 ## Configuration
 
-Core configuration consists of selecting an active instrument, source file (a PDF stored on the redcap server), a CSS selector for the action button (i.e. Send Fax, Send Email, Download), destination information (i.e. email, phone number), and the source/target pairs for each item to be filled on the PDF. 
+Core configuration consists of selecting an active instrument, source file (a PDF stored on the redcap server), a CSS selector for the action button (i.e. Send Fax, Send Email, Download), destination information (i.e. email, phone number), and the source/target pairs for each item to be filled on the PDF.
 
 ## Call Outs
 
-* PDF Radio and dropdowns are not supported at this time.
-
-* All dates are formatted m/d/y 
+* PDF Radios and dropdowns are not supported
 
 * We only support one instance of form fill per instrument
-
-* PDF Checkboxes are supported, their data should be sourced from an text, note, or calc field. Each checkbox on the PDF should be indivudually named and data loaded for each.

@@ -1,9 +1,10 @@
 $(document).ready(function () {
     console.log("Loaded Form Fill config")
-    var $modal = $('#external-modules-configure-modal');
+    let $modal = $('#external-modules-configure-modal');
+    let prefix = ExternalModules.UWMadison.FormFill.prefix;
     $modal.on('show.bs.modal', function () {
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== FormFill.modulePrefix) return;
+        if ($(this).data('module') !== prefix) return;
 
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld === 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstancesOld = ExternalModules.Settings.prototype.resetConfigInstances;
@@ -11,11 +12,15 @@ $(document).ready(function () {
         ExternalModules.Settings.prototype.resetConfigInstances = function () {
             ExternalModules.Settings.prototype.resetConfigInstancesOld();
 
-            if ($modal.data('module') !== FormFill.modulePrefix) return;
+            if ($modal.data('module') !== prefix) return;
 
             $modal.find("tr[field=destination]").each(function () {
                 $(this).nextUntil('.sub_start').hide();
             });
+
+            if ($modal.find("[name='date-format']").val() == "") {
+                $modal.find("[name='date-format']").val('MM/dd/y');
+            }
 
             // Hide rows dependining on destination type
             $modal.find("tr[field=destination]").on('click', function () {
@@ -38,7 +43,7 @@ $(document).ready(function () {
 
     $modal.on('hide.bs.modal', function () {
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== FormFill.modulePrefix) return;
+        if ($(this).data('module') !== prefix) return;
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld !== 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstances = ExternalModules.Settings.prototype.resetConfigInstancesOld;
     });

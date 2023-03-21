@@ -7,15 +7,10 @@ use REDCap;
 
 class FormFill extends AbstractExternalModule
 {
-
-    private $module_global = 'FormFill';
-    private $PDFlibJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js";
-    private $sha = "sha512-fY7ysH3L9y/DP/DVYqPNopiQ+Ubd9t0dt9C4riu0RZwYOvMejMnKVAnXK7xfB0SIawKP0c4sQoh2niIMSkkWAw==";
-
     public function redcap_every_page_top($project_id)
     {
         // Custom Config page
-        if (strpos(PAGE, 'manager/project.php') !== false && $project_id != NULL) {
+        if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
             $this->initGlobal();
             $this->includeJs('config.js');
         }
@@ -55,7 +50,8 @@ class FormFill extends AbstractExternalModule
                 $defaultEvent = $settings['event'][$settingIndex];
                 foreach ($valueArray[$settingIndex] as $index => $field) {
                     $data = REDCap::getData($project_id, 'array', $record, $field)[$record];
-                    $data = empty($data[$event_id][$field]) ? empty($data[$defaultEvent][$field]) ? reset($data)[$field] : $data[$defaultEvent][$field] : $data[$event_id][$field];
+                    $default = empty($data[$defaultEvent][$field]) ? reset($data)[$field] : $data[$defaultEvent][$field];
+                    $data = empty($data[$event_id][$field]) ? $default : $data[$event_id][$field];
                     $type = $dd[$field]['field_type'];
                     $validation = $dd[$field]['text_validation_type_or_show_slider_number'];
                     if ($type == 'checkbox') // Only look at first check box
@@ -73,80 +69,84 @@ class FormFill extends AbstractExternalModule
         }
 
         if (!empty($file)) {
-            $this->passArgument('debug', $settings);
             $this->passArgument('pdf_base64', $file);
             $this->passArgument('settings', $parsed);
-            $this->includePDFlibJS();
+            $this->includeJs('pdf-lib.min.js');
             $this->includeJs('formfill.js');
         }
     }
 
-    public function sendEmail()
+    public function redcap_module_ajax($action, $payload, $project_id, $record, $instrument, $event_id)
     {
-        if ($_SERVER['REQUEST_METHOD'] != 'POST' || !isset($_POST['from']) || !isset($_POST['to']) || !isset($_POST['attachment'])) {
-            echo json_encode([
+        $result = [];
+        if ($action == "log") {
+            $result = $this->projectLog($project_id, $record, $event_id, $payload['action'], $payload['changes']);
+        } elseif ($action == "email") {
+            $result = $this->sendEmail($payload['to'], $payload['from'], $payload['subject'], $payload['message'], $payload['attachment']);
+        }
+        return $result;
+    }
+
+    public function sendEmail($to, $from, $subject, $message, $attachment)
+    {
+        if (!isset($from) || !isset($to) || !isset($attachment)) {
+            return [
                 'text' => "Missing required parameters",
                 'sent' => false
-            ]);
-            return;
+            ];
         }
 
         // Set blank values if missing
-        if (!isset($_POST['subject'])) $_POST['subject'] = '';
-        if (!isset($_POST['message'])) $_POST['message'] = ' '; // Redcap requires a non-empty-string message
+        if (!isset($subject)) $subject = '';
+        if (!isset($message)) $message = ' '; // Redcap requires a non-empty-string message
 
         // Stash the PDF in the PHP tmp directory, send the email, and remove the file
-        $pdf = base64_decode($_POST['attachment']);
+        $pdf = base64_decode($attachment);
         $path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'tmpRedcap.pdf';
         $file = fopen($path, 'w');
         fwrite($file, $pdf);
         fclose($file);
-        $sent = REDCap::email($_POST['to'], $_POST['from'], $_POST['subject'], $_POST['message'], null, null, null, ['REDCap_Form.pdf' => $path]);
+        $sent = REDCap::email($to, $from, $subject, $message, null, null, null, ['REDCap_Form.pdf' => $path]);
         unlink($path);
 
-        echo json_encode([
+        return [
             'text' => $sent ? "Email/Fax Sent" : "Issue sending Email/Fax",
             'sent' => $sent
-        ]);
+        ];
     }
 
-    public function projectLog()
+    public function projectLog($project_id, $record, $event_id, $action, $changes)
     {
-        // We expect all of these to be set, just being safe.
         $sql = NULL;
-        $action =  empty($_POST['action'])  ? "No action logged" : $_POST['action'];
-
-        REDCap::logEvent($action, $_POST['changes'], $sql, $_POST['record'], $_GET['eventid'], $_GET['pid']);
-        echo json_encode([
+        $action =  empty($action)  ? "No action logged" : $action;
+        $changes = empty($record) || empty($event_id) ? "Record Home Page\n{$changes}" : $changes;
+        REDCap::logEvent($action, $changes, $sql, $record, $event_id, $project_id);
+        return [
             'text' => 'Action logged'
-        ]);
+        ];
     }
 
     private function initGlobal()
     {
         global $project_contact_email;
         global $from_email;
+        $this->initializeJavascriptModuleObject();
         $data = json_encode([
-            "modulePrefix" => $this->PREFIX,
+            "prefix" => $this->getPrefix(),
             "from" => $from_email ? $from_email : $project_contact_email,
-            "router" => $this->getUrl('router.php'),
-            "fax" => $this->getSystemSetting('fax-fufiller')
+            "fax" => $this->getProjectSetting('fax-fufiller'),
+            "format" => $this->getProjectSetting('date-format')
         ]);
-        echo "<script>var {$this->module_global} = {$data};</script>";
+        echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }
 
     private function passArgument($name, $value)
     {
-        echo "<script>{$this->module_global}.{$name} = " . json_encode($value) . ";</script>";
+        echo "<script>{$this->getJavascriptModuleObjectName()}.{$name} = " . json_encode($value) . ";</script>";
     }
 
     private function includeJs($path)
     {
         echo "<script src={$this->getUrl($path)}></script>";
-    }
-
-    private function includePDFlibJS()
-    {
-        echo "<script src={$this->PDFlibJS} integrity={$this->sha} crossorigin='anonymous'></script>";
     }
 }

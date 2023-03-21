@@ -13,19 +13,30 @@
         "redcap_data_entry_form",
         "redcap_every_page_top"
     ],
-    "framework-version": 7,
-    "system-settings": [
-        {
-            "key": "fax-fufiller",
-            "name": "<b>Faxing address:</b><br>i.e. 'concordsend.com'",
-            "type": "textbox"
-        }
+    "compatibility": {
+        "redcap-version-min": "12.0.4"
+    },
+    "framework-version": 11,
+    "enable-ajax-logging": true,
+    "auth-ajax-actions": [
+        "log",
+        "email"
     ],
     "project-settings": [
         {
             "key": "descriptive",
-            "name": "When filling in checkboxes on a PDF eveny item should be individualy named, any truthy value will be used to select the checkbox. All dates are formatted m/d/y. Time and datetime fields are not currently supported. PDF Radio, buttons, and dropdowns, and option lists are not currently supported.",
+            "name": "When filling in checkboxes on a PDF eveny item should be individualy named, any truthy value will be used to select the checkbox. PDF specifc text formatting, like datetimes, may not work for all PDF versions. PDF Radios and dropdowns (option lists) are not currently supported.",
             "type": "descriptive"
+        },
+        {
+            "key": "fax-fufiller",
+            "name": "<b>E-faxing address:</b><br>i.e. 'concordsend.com'",
+            "type": "textbox"
+        },
+        {
+            "key": "date-format",
+            "name": "<b>Date Format:</b>",
+            "type": "textbox"
         },
         {
             "key": "filable-instance",
@@ -123,8 +134,5 @@
                 }
             ]
         }
-    ],
-    "compatibility": {
-        "redcap-version-min": "12.0.4"
-    }
+    ]
 }
