@@ -30,12 +30,12 @@
         },
         {
             "key": "fax-fufiller",
-            "name": "<b>E-faxing address:</b><br>i.e. 'concordsend.com'",
+            "name": "<b>E-faxing address:</b><br>e.g. 'concordsend.com'",
             "type": "textbox"
         },
         {
             "key": "date-format",
-            "name": "<b>Date Format:</b>",
+            "name": "<b>Date Format:</b><br>e.g. 'MM/dd/y'",
             "type": "textbox"
         },
         {
@@ -57,8 +57,8 @@
                 },
                 {
                     "key": "pdf",
-                    "name": "<b>Source File Location:</b><br>Location on the server of the fillable PDF",
-                    "type": "textbox"
+                    "name": "<b>PDF Form</b>",
+                    "type": "file"
                 },
                 {
                     "key": "button",

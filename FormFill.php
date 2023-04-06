@@ -39,9 +39,11 @@ class FormFill extends AbstractExternalModule
                 continue;
 
             if ($name == 'pdf') {
-                $file = $valueArray[$settingIndex];
-                if (!empty($file))
-                    $file = unpack("C*", file_get_contents($file));
+                $doc_id = $valueArray[$settingIndex];
+                if (!empty($doc_id)) {
+                    list($mimeType, $docName, $fileContent) = REDCap::getFile($doc_id);
+                    $file = unpack("C*", $fileContent);
+                }
                 continue;
             }
 
