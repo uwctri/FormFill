@@ -60,7 +60,7 @@ class FormFill extends AbstractExternalModule
                         $data = reset($data) ? true : false;
                     if ($type == 'radio' || $type == 'yesno' || $type == 'dropdown') // Code blank, 0, and negatives as false
                         $data = $data == '' || $data == '0' ? false : !(intval($data) < 0);
-                    $fetched[$index] = $data;
+                    $fetched[$index] = $this->escape($data);
                 }
                 $parsed[$name] = $fetched;
                 $parsed['redcap-fields'] = $valueArray[$settingIndex];
