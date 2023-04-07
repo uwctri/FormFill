@@ -1,6 +1,6 @@
 {
     "name": "Form Fill",
-    "description": "Fillout a PDF form and email, save, or fax it",
+    "description": "Populate a PDF form with Redcap data and email, save, or fax it",
     "namespace": "UWMadison\\FormFill",
     "authors": [
         {
