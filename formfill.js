@@ -72,7 +72,7 @@
                     pdfField.uncheck();
             }
             else {
-                let tmp = typeof localVals[index] === "undefined" ? "[Field Does Not Exist]" : localVals[index];
+                let tmp = ((typeof localVals[index] === "undefined") || (localVals[index] == null)) ? "[Field Does Not Exist]" : localVals[index];
                 pdfField.setText(tmp);
             }
         });
