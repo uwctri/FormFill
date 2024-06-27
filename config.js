@@ -13,6 +13,7 @@ $(document).ready(function () {
             ExternalModules.Settings.prototype.resetConfigInstancesOld();
 
             if ($modal.data('module') !== prefix) return;
+            $modal.find(".sub_parent td").css("background-color", "#e6e6e6");
 
             $modal.find("tr[field=destination]").each(function () {
                 $(this).nextUntil('.sub_start').hide();
