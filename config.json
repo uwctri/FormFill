@@ -9,14 +9,10 @@
             "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
-    "permissions": [
-        "redcap_data_entry_form",
-        "redcap_every_page_top"
-    ],
     "compatibility": {
-        "redcap-version-min": "13.1.2"
+        "redcap-version-min": "13.7.0"
     },
-    "framework-version": 11,
+    "framework-version": 14,
     "enable-ajax-logging": true,
     "auth-ajax-actions": [
         "log",
