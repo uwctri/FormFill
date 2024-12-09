@@ -17,21 +17,26 @@
 
     attachEvents = () => {
         if (initSuccess) return;
-        if ((module.settings.destination == 'email' && !module.settings.email) ||
-            (module.settings.destination == 'fax' && (!module.settings.phone || !module.fax))) {
-            $(module.settings.button).on('click', issue);
-        }
-        else {
-            $(module.settings.button).on('click', fillPDF);
-        }
+        $.each(module.settings, function (index, btnSetting) {
+            if ((btnSetting.destination == 'email' && !btnSetting.email) ||
+                (btnSetting.destination == 'fax' && (!btnSetting.phone || !module.fax))) {
+                $(btnSetting.button).on('click', issue);
+                return;
+            }
+            $(btnSetting.button).on('click', function () {
+                fillPDF(index);
+            });
+        })
         initSuccess = true;
     }
 
-    fillPDF = async () => {
+    fillPDF = async (settingsIndex) => {
 
-        // Grab any blank values that might be on this form and do any formatting    
-        let localVals = module.settings['fill-value'];
-        $.each(module.settings['redcap-fields'], function (index, name) {
+        // Grab any blank values that might be on this form and do any formatting   
+        const btnSettings = module.settings[settingsIndex];
+        const pdfDoc = module.pdfDoc[settingsIndex];
+        let localVals = btnSettings['fill-value'];
+        $.each(btnSettings['redcap-fields'], function (index, name) {
 
             // Grab local values
             if ($(`*[name=${name}]`).length > 0) {
@@ -55,10 +60,10 @@
         });
 
         // Flip though all fields on the form 
-        let form = module.pdfDoc.getForm();
+        let form = pdfDoc.getForm();
         let fields = form.getFields();
         $.each(fields, function (_, pdfField) {
-            let index = module.settings['pdf-field-name'].indexOf(pdfField.getName());
+            let index = btnSettings['pdf-field-name'].indexOf(pdfField.getName());
             if (index == -1)
                 return true;
             if (pdfField.check) {
@@ -78,59 +83,59 @@
         });
 
         // Save and send
-        let pdf = null;
-        switch (module.settings.destination) {
+        let pdf = await pdfDoc.saveAsBase64();
+        let uri = await pdfDoc.saveAsBase64({ dataUri: true });
+        switch (btnSettings.destination) {
             case 'email':
-                pdf = await module.pdfDoc.saveAsBase64();
-                let emails = module.settings.email.replaceAll(' ', '').split(',');
+                let emails = btnSettings.email.replaceAll(' ', '').split(',');
                 emails.forEach(async (email) => {
-                    await send(module.from, email, module.settings.subject || "", pdf, module.settings.body);
+                    await send(settingsIndex, module.from, email, btnSettings.subject || "", pdf, uri, btnSettings.body);
                 });
                 break;
             case 'fax':
-                pdf = await module.pdfDoc.saveAsBase64();
-                let phones = module.settings.phone.replace(/[-() ]/g, '').split(',');
+                let phones = btnSettings.phone.replace(/[-() ]/g, '').split(',');
                 phones.forEach(async (phone) => {
                     phone = phone.length != 11 ? '1' + phone : phone;
-                    await send(module.from, phone + "@" + module.fax, module.settings.regarding || "", pdf, module.settings.cover);
+                    await send(settingsIndex, module.from, phone + "@" + module.fax, btnSettings.regarding || "", pdf, uri, btnSettings.cover);
                 });
                 break;
             case 'download':
-                let pdfBytes = await module.pdfDoc.save();
+                let pdfBytes = await pdfDoc.save();
                 download(pdfBytes, $("#dataEntryTopOptionsButtons").next('div').text().trim() + ".pdf", "application/pdf");
                 break;
         }
     }
 
-    send = async (from, to, subject, pdf, body) => {
+    send = async (from, to, subject, pdf, uri, body) => {
+        const msg = `To: ${to}\nSubject: ${subject}`
+
         module.ajax("email", {
             from: from,
             to: to,
             attachment: pdf,
             subject: subject,
             message: body
-        }).then(function (response) {
+        }).then(async function (response) {
             console.log(response.text);
             if (response.sent) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Document Sent',
-                    text: 'The completed document has been successfully ' + module.settings.destination + 'ed!',
+                    text: 'The completed document has been successfully sent!',
                 });
-                log('Form sent', 'To: ' + to + '\nSubject: ' + subject);
-            } else {
-                failsafeDownload();
-                log('Form send failed', 'To: ' + to + '\nSubject: ' + subject);
+                log('Form sent', msg);
+                return;
             }
-        }).catch(function (err) {
+            failsafeDownload(uri);
+            log('Form send failed', msg);
+        }).catch(async function (err) {
             console.log(err);
-            failsafeDownload();
-            log('Form send failed', 'To: ' + to + '\nSubject: ' + subject);
+            failsafeDownload(uri);
+            log('Form send failed', msg);
         });
     }
 
-    failsafeDownload = async () => {
-        let uri = await module.pdfDoc.saveAsBase64({ dataUri: true });
+    failsafeDownload = async (uri) => {
         Swal.fire({
             icon: 'error',
             title: 'Issue Sending Fax/Email',
@@ -164,7 +169,10 @@
     }
 
     $(document).ready(async () => {
-        module.pdfDoc = await PDFLib.PDFDocument.load(Uint8Array.from(Object.values(module.pdf_base64)));
+        module.pdfDoc = []
+        $.each(module.pdf_base64, async function (index, pdf) {
+            module.pdfDoc[index] = await PDFLib.PDFDocument.load(Uint8Array.from(Object.values(pdf)));
+        });
         // Load the config, play nice w/ Shazam
         if (typeof Shazam == "object") {
             let oldCallback = Shazam.beforeDisplayCallback;
