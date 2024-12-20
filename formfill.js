@@ -89,14 +89,14 @@
             case 'email':
                 let emails = btnSettings.email.replaceAll(' ', '').split(',');
                 emails.forEach(async (email) => {
-                    await send(settingsIndex, module.from, email, btnSettings.subject || "", pdf, uri, btnSettings.body);
+                    await send(module.from, email, btnSettings.subject || "", pdf, uri, btnSettings.body);
                 });
                 break;
             case 'fax':
                 let phones = btnSettings.phone.replace(/[-() ]/g, '').split(',');
                 phones.forEach(async (phone) => {
                     phone = phone.length != 11 ? '1' + phone : phone;
-                    await send(settingsIndex, module.from, phone + "@" + module.fax, btnSettings.regarding || "", pdf, uri, btnSettings.cover);
+                    await send(module.from, phone + "@" + module.fax, btnSettings.regarding || "", pdf, uri, btnSettings.cover);
                 });
                 break;
             case 'download':
