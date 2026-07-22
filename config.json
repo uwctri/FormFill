@@ -9,10 +9,7 @@
             "institution": "UW Madison - Center for Tobacco Research and Intervention"
         }
     ],
-    "compatibility": {
-        "redcap-version-min": "13.7.0"
-    },
-    "framework-version": 14,
+    "framework-version": 16,
     "enable-ajax-logging": true,
     "auth-ajax-actions": [
         "log",
@@ -33,6 +30,16 @@
             "key": "date-format",
             "name": "<b>Date Format:</b><br>e.g. 'MM/dd/y'",
             "type": "textbox"
+        },
+        {
+            "key": "time-12",
+            "name": "<b>12-Hour Time:</b><br>Convert 24-hour to 12-hour time",
+            "type": "checkbox"
+        },
+        {
+            "key": "tz-offset",
+            "name": "<b>Timezone Offset:</b><br>Offset from local time in hours per record",
+            "type": "field-list"
         },
         {
             "key": "filable-instance",

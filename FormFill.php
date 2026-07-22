@@ -34,6 +34,22 @@ class FormFill extends AbstractExternalModule
         $files = [];
         $parsedSettings = [];
 
+        // Pull timezone offset for this record if it exists
+        $tzOffset = 0;
+        if (isset($settings['tz-offset'])) {
+            $tzField = $settings['tz-offset'];
+            if (!empty($tzField)) {
+                $tzData = REDCap::getData($project_id, 'array', $record, $tzField)[$record];
+                // Flip through and find the first non-empty value for this record, if it exists
+                foreach ($tzData as $eventData) {
+                    if (!empty($eventData[$tzField])) {
+                        $tzOffset = $eventData[$tzField];
+                        break;
+                    }
+                }
+            }
+        }
+
         foreach ($validSettings as $settingIndex) {
             $parsed = [];
 
@@ -82,6 +98,7 @@ class FormFill extends AbstractExternalModule
         if (!empty($files)) {
             $this->passArgument('pdf_base64', $files);
             $this->passArgument('settings', $parsedSettings);
+            $this->passArgument('tzOffset', $tzOffset);
             $this->includeJs('pdf-lib.min.js');
             $this->includeJs('formfill.js');
         }
@@ -146,7 +163,8 @@ class FormFill extends AbstractExternalModule
             "prefix" => $this->getPrefix(),
             "from" => $from_email ? $from_email : $project_contact_email,
             "fax" => $this->getProjectSetting('fax-fufiller'),
-            "format" => $this->getProjectSetting('date-format')
+            "format" => $this->getProjectSetting('date-format'),
+            "use12HourTime" => $this->getProjectSetting('time-12') == '1',
         ]);
         echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }

@@ -50,12 +50,30 @@
                 }
             }
 
-            // Format Y-M-D to w/e the user wants
             if (typeof localVals[index] == "string") {
+                // Apply timezone offset if it exists
+                if (module.tzOffset && module.tzOffset != 0) {
+                    let [d, t] = localVals[index].split(' ');
+                    if (t && d.match(/^\d{4}\-\d{2}\-\d{2}$/)) {
+                        let date = new Date(d);
+                        date.setHours(date.getHours() + parseInt(module.tzOffset));
+                        localVals[index] = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${t}`;
+                    }
+                }
+                // Format Y-M-D to w/e the user wants
                 let [d, t] = localVals[index].split(' ');
                 if (d.match(/^\d{4}\-\d{2}\-\d{2}$/)) {
-                    localVals[index] = formatDate(new Date(`${d} ${t || "00:00"}`), module.format);
+                    d = formatDate(new Date(d), module.format);
                 }
+                // Format 24 hour time to 12 hour time if enabled
+                if (module.use12HourTime && t && t.match(/^\d{2}\:\d{2}$/)) {
+                    let [h, m] = t.split(':');
+                    let ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12; // the hour '0' should be '12'
+                    t = `${h}:${m} ${ampm}`;
+                }
+                localVals[index] = t ? `${d} ${t}` : d;
             }
         });
 
