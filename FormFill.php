@@ -43,7 +43,7 @@ class FormFill extends AbstractExternalModule
                 // Flip through and find the first non-empty value for this record, if it exists
                 foreach ($tzData as $eventData) {
                     if (!empty($eventData[$tzField])) {
-                        $tzOffset = $eventData[$tzField];
+                        $tzOffset = (int)$eventData[$tzField];
                         break;
                     }
                 }
