@@ -30,50 +30,144 @@
         initSuccess = true;
     }
 
+    formatDateTimeValue = (val) => {
+        if (typeof val !== "string" || !val.trim()) return val;
+
+        val = val.trim();
+        const format = module.format || 'MM/dd/y';
+
+        // 1. Pure time (e.g. "14:30", "14:30:45", "2:30 PM")
+        const pureTimeMatch = val.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([ap]m))?$/i);
+        if (pureTimeMatch) {
+            let [, hStr, mStr, sStr, ampmStr] = pureTimeMatch;
+            let h = parseInt(hStr, 10);
+            let m = parseInt(mStr, 10);
+            let hasSec = sStr !== undefined;
+            let s = hasSec ? parseInt(sStr, 10) : 0;
+
+            if (ampmStr) {
+                let lower = ampmStr.toLowerCase();
+                if (lower === 'pm' && h < 12) h += 12;
+                if (lower === 'am' && h === 12) h = 0;
+            }
+
+            if (module.tzOffset && module.tzOffset !== 0) {
+                h = (h + parseInt(module.tzOffset, 10)) % 24;
+                if (h < 0) h += 24;
+            }
+
+            if (module.use12HourTime) {
+                let ampm = h >= 12 ? 'PM' : 'AM';
+                let h12 = h % 12 || 12;
+                let mFormatted = m.toString().padStart(2, '0');
+                let sFormatted = hasSec ? `:${s.toString().padStart(2, '0')}` : '';
+                return `${h12}:${mFormatted}${sFormatted} ${ampm}`;
+            } else {
+                let hFormatted = h.toString().padStart(2, '0');
+                let mFormatted = m.toString().padStart(2, '0');
+                let sFormatted = hasSec ? `:${s.toString().padStart(2, '0')}` : '';
+                return `${hFormatted}:${mFormatted}${sFormatted}`;
+            }
+        }
+
+        // 2. Date or Datetime (e.g. "2026-09-24", "09-24-2026", "2026-09-24 14:30", "09-24-2026 14:30")
+        let parts = val.split(/\s+/);
+        let d = parts[0];
+        let t = parts.slice(1).join(' ');
+
+        let ymdMatch = d.match(/^(\d{4})[-\/](\d{2})[-\/](\d{2})$/);
+        let mdyMatch = d.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+        let tMatch = t ? t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\s*([ap]m))?$/i) : null;
+
+        if (ymdMatch || mdyMatch) {
+            let year, month, day;
+            if (ymdMatch) {
+                year = parseInt(ymdMatch[1], 10);
+                month = parseInt(ymdMatch[2], 10);
+                day = parseInt(ymdMatch[3], 10);
+            } else {
+                let isDmy = /^[dD]/.test(format);
+                if (isDmy) {
+                    day = parseInt(mdyMatch[1], 10);
+                    month = parseInt(mdyMatch[2], 10);
+                } else {
+                    month = parseInt(mdyMatch[1], 10);
+                    day = parseInt(mdyMatch[2], 10);
+                }
+                year = parseInt(mdyMatch[3], 10);
+            }
+
+            let dt;
+            let hasTime = !!tMatch;
+            let hasSec = false;
+
+            if (hasTime) {
+                let h = parseInt(tMatch[1], 10);
+                let m = parseInt(tMatch[2], 10);
+                hasSec = tMatch[3] !== undefined;
+                let s = hasSec ? parseInt(tMatch[3], 10) : 0;
+                let ampmStr = tMatch[4];
+
+                if (ampmStr) {
+                    let lower = ampmStr.toLowerCase();
+                    if (lower === 'pm' && h < 12) h += 12;
+                    if (lower === 'am' && h === 12) h = 0;
+                }
+
+                // Construct in local time to avoid UTC parsing timezone shifts
+                dt = new Date(year, month - 1, day, h, m, s);
+
+                if (module.tzOffset && module.tzOffset !== 0) {
+                    dt.setHours(dt.getHours() + parseInt(module.tzOffset, 10));
+                }
+            } else {
+                // Pure date constructed in local time
+                dt = new Date(year, month - 1, day);
+            }
+
+            let formattedDate = typeof formatDate === 'function'
+                ? formatDate(dt, format)
+                : `${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getDate().toString().padStart(2, '0')}/${dt.getFullYear()}`;
+
+            if (!hasTime) {
+                return formattedDate;
+            }
+
+            let formattedTime;
+            let h = dt.getHours();
+            let m = dt.getMinutes().toString().padStart(2, '0');
+            let s = hasSec ? `:${dt.getSeconds().toString().padStart(2, '0')}` : '';
+
+            if (module.use12HourTime) {
+                let ampm = h >= 12 ? 'PM' : 'AM';
+                let h12 = h % 12 || 12;
+                formattedTime = `${h12}:${m}${s} ${ampm}`;
+            } else {
+                let h24 = h.toString().padStart(2, '0');
+                formattedTime = `${h24}:${m}${s}`;
+            }
+
+            return `${formattedDate} ${formattedTime}`;
+        }
+
+        return val;
+    };
+
     fillPDF = async (settingsIndex) => {
 
         // Grab any blank values that might be on this form and do any formatting   
         const btnSettings = module.settings[settingsIndex];
         const pdfDoc = module.pdfDoc[settingsIndex];
-        let localVals = btnSettings['fill-value'];
+        let localVals = [...btnSettings['fill-value']];
         $.each(btnSettings['redcap-fields'], function (index, name) {
 
             // Grab local values
             if ($(`*[name=${name}]`).length > 0) {
                 localVals[index] = $(`*[name=${name}]`).val();
-
-                // We don't know the format of local dates (M/D/Y or D/M/Y), sub delimiter
-                let [d, t] = localVals[index].split(' ');
-                if (d.match(/^\d{2}\-\d{2}\-\d{4}$/)) {
-                    const deliminter = module.format.replace(/[a-zA-Z0-9 ]/g, '')[0];
-                    localVals[index] = localVals[index].replaceAll('-', deliminter);
-                }
             }
 
             if (typeof localVals[index] == "string") {
-                // Apply timezone offset if it exists
-                if (module.tzOffset && module.tzOffset != 0) {
-                    let [d, t] = localVals[index].split(' ');
-                    if (t && d.match(/^\d{4}\-\d{2}\-\d{2}$/)) {
-                        let date = new Date(d);
-                        date.setHours(date.getHours() + parseInt(module.tzOffset));
-                        localVals[index] = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${t}`;
-                    }
-                }
-                // Format Y-M-D to w/e the user wants
-                let [d, t] = localVals[index].split(' ');
-                if (d.match(/^\d{4}\-\d{2}\-\d{2}$/)) {
-                    d = formatDate(new Date(d), module.format);
-                }
-                // Format 24 hour time to 12 hour time if enabled
-                if (module.use12HourTime && t && t.match(/^\d{2}\:\d{2}$/)) {
-                    let [h, m] = t.split(':');
-                    let ampm = h >= 12 ? 'PM' : 'AM';
-                    h = h % 12;
-                    h = h ? h : 12; // the hour '0' should be '12'
-                    t = `${h}:${m} ${ampm}`;
-                }
-                localVals[index] = t ? `${d} ${t}` : d;
+                localVals[index] = formatDateTimeValue(localVals[index]);
             }
         });
 
