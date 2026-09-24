@@ -54,7 +54,7 @@ class FormFill extends AbstractExternalModule
             $parsed = [];
 
             foreach ($settings as $name => $valueArray) {
-                if (in_array($name, ['enabled', 'filable-instance', 'instrument', 'filable-field', 'event']))
+                if (in_array($name, ['enabled', 'filable-instance', 'instrument', 'filable-field', 'event', 'date-format', 'time-12', 'fax-fufiller', 'tz-offset']))
                     continue;
 
                 if ($name == 'pdf') {
