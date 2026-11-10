@@ -1,0 +1,80 @@
+name: Update pdf-lib
+
+on:
+  schedule:
+    # Runs every Monday at 08:30 UTC, 2:30am CST
+    - cron: '30 8 * * 1'
+  workflow_dispatch: # Allows manual trigger from the GitHub Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-and-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check version and determine change type
+        id: semver
+        run: |
+          # 1. Fetch latest version from npm
+          LATEST=$(curl -s https://registry.npmjs.org/pdf-lib/latest | jq -r '.version')
+          
+          # 2. Read local version from header comment
+          CURRENT=$(head -n 1 pdf-lib.min.js | sed -n 's/.*pdf-lib \([0-9\.]*\).*/\1/p')
+          
+          echo "Current: $CURRENT | Latest: $LATEST"
+          echo "current_version=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST" = "$CURRENT" ] || [ -z "$LATEST" ]; then
+            echo "change_type=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # 3. Split into Major.Minor.Patch
+          IFS='.' read -r CUR_MAJ CUR_MIN CUR_PAT <<< "$CURRENT"
+          IFS='.' read -r NEW_MAJ NEW_MIN NEW_PAT <<< "$LATEST"
+
+          if [ "$NEW_MAJ" -gt "$CUR_MAJ" ]; then
+            echo "change_type=major" >> "$GITHUB_OUTPUT"
+          elif [ "$NEW_MIN" -gt "$CUR_MIN" ]; then
+            echo "change_type=minor" >> "$GITHUB_OUTPUT"
+          else
+            echo "change_type=patch" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download new pdf-lib bundle
+        if: steps.semver.outputs.change_type != 'none'
+        run: |
+          NEW_VER="${{ steps.semver.outputs.latest_version }}"
+          TMP_FILE=$(mktemp)
+          echo "/** pdf-lib ${NEW_VER} **/" > "$TMP_FILE"
+          curl -sL "https://cdn.jsdelivr.net/npm/pdf-lib@${NEW_VER}/dist/pdf-lib.min.js" >> "$TMP_FILE"
+          mv "$TMP_FILE" pdf-lib.min.js
+
+      - name: Create Pull Request
+        if: steps.semver.outputs.change_type != 'none'
+        id: cpr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): update pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
+          title: "chore(deps): update pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
+          body: |
+            Automated upgrade of **pdf-lib** from `${{ steps.semver.outputs.current_version }}` to `${{ steps.semver.outputs.latest_version }}` (${{ steps.semver.outputs.change_type }} bump).
+
+            - [pdf-lib GitHub Releases](https://github.com/Hopding/pdf-lib/releases)
+          branch: "upgrade-pdf-lib-${{ steps.semver.outputs.latest_version }}"
+          delete-branch: true
+
+      - name: Auto-merge Minor and Patch PRs
+        if: steps.cpr.outputs.pull-request-operation == 'created' && (steps.semver.outputs.change_type == 'patch' || steps.semver.outputs.change_type == 'minor')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Auto-merging ${{ steps.semver.outputs.change_type }} bump..."
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge --auto || gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --merge

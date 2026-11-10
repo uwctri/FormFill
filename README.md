@@ -19,3 +19,8 @@ Core configuration consists of selecting an active instrument, source file (a PD
 * PDF Radios and dropdowns are not supported
 
 * We only support one instance of form fill per instrument
+
+
+## Dependencies
+
+* **PDF-Lib** (`pdf-lib.min.js`) - Auto-updating via GitHub Actions weekly workflow.
