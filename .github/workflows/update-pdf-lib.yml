@@ -21,7 +21,7 @@ jobs:
         id: semver
         run: |
           # 1. Fetch latest version from npm
-          LATEST=$(curl -s https://registry.npmjs.org/pdf-lib/latest | jq -r '.version')
+          LATEST=$(curl -s https://registry.npmjs.org/@cantoo/pdf-lib/latest | jq -r '.version')
           
           # 2. Read local version from header comment
           CURRENT=$(head -n 1 pdf-lib.min.js | sed -n 's/.*pdf-lib \([0-9\.]*\).*/\1/p')
@@ -30,7 +30,7 @@ jobs:
           echo "current_version=$CURRENT" >> "$GITHUB_OUTPUT"
           echo "latest_version=$LATEST" >> "$GITHUB_OUTPUT"
 
-          if [ "$LATEST" = "$CURRENT" ] || [ -z "$LATEST" ]; then
+          if [ "$LATEST" = "$CURRENT" ] || [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then
             echo "change_type=none" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -52,8 +52,8 @@ jobs:
         run: |
           NEW_VER="${{ steps.semver.outputs.latest_version }}"
           TMP_FILE=$(mktemp)
-          echo "/** pdf-lib ${NEW_VER} **/" > "$TMP_FILE"
-          curl -sL "https://cdn.jsdelivr.net/npm/pdf-lib@${NEW_VER}/dist/pdf-lib.min.js" >> "$TMP_FILE"
+          echo "/** @cantoo/pdf-lib ${NEW_VER} **/" > "$TMP_FILE"
+          curl -sfL "https://cdn.jsdelivr.net/npm/@cantoo/pdf-lib@${NEW_VER}/dist/pdf-lib.min.js" >> "$TMP_FILE"
           mv "$TMP_FILE" pdf-lib.min.js
 
       - name: Create Pull Request
@@ -62,12 +62,12 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(deps): update pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
-          title: "chore(deps): update pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
+          commit-message: "chore(deps): update @cantoo/pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
+          title: "chore(deps): update @cantoo/pdf-lib to ${{ steps.semver.outputs.latest_version }} (${{ steps.semver.outputs.change_type }})"
           body: |
-            Automated upgrade of **pdf-lib** from `${{ steps.semver.outputs.current_version }}` to `${{ steps.semver.outputs.latest_version }}` (${{ steps.semver.outputs.change_type }} bump).
+            Automated upgrade of **@cantoo/pdf-lib** from `${{ steps.semver.outputs.current_version }}` to `${{ steps.semver.outputs.latest_version }}` (${{ steps.semver.outputs.change_type }} bump).
 
-            - [pdf-lib GitHub Releases](https://github.com/Hopding/pdf-lib/releases)
+            - [pdf-lib GitHub Releases](https://github.com/cantoo-scribe/pdf-lib/releases)
           branch: "upgrade-pdf-lib-${{ steps.semver.outputs.latest_version }}"
           delete-branch: true
 
